@@ -165,16 +165,13 @@ export default function InsightsScreen() {
           )}
 
           <View style={styles.upgradeCard}>
-            <Text style={styles.upgradeTitle}>Unlock AI Insights</Text>
+            <Text style={styles.upgradeTitle}>AI Insights — Coming Soon</Text>
             <Text style={styles.upgradeBody}>
-              Premium gives you weekly emotional pattern analysis powered by Thera — trend detection, peak day breakdowns, and personalized suggestions.
+              Weekly emotional pattern analysis powered by Thera — trend detection, peak day breakdowns, and personalized suggestions.
             </Text>
             {['Weekly AI trend analysis', 'Dominant emotion tracking', 'On-demand deep analysis'].map(f => (
               <Text key={f} style={styles.upgradeFeature}>• {f}</Text>
             ))}
-            <TouchableOpacity style={styles.upgradeBtn}>
-              <Text style={styles.upgradeBtnText}>Upgrade to Premium — $9.99/mo</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
       </SafeAreaView>

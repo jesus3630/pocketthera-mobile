@@ -8,7 +8,16 @@ export default function RootLayout() {
   const router = useRouter();
   const segments = useSegments();
 
-  useEffect(() => { loadMe(); }, []);
+  useEffect(() => {
+    // TEMP screenshot auto-login — DO NOT COMMIT
+    (async () => {
+      await loadMe();
+      const s = useAuthStore.getState();
+      if (__DEV__ && !s.user) {
+        try { await s.login('jesusg.biz11@gmail.com', 'TestPass123!'); } catch {}
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     if (loading) return;
