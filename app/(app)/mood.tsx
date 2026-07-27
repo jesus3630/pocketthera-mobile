@@ -1,16 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
   TouchableOpacity, Alert, ActivityIndicator,
 } from 'react-native';
-import { api } from '../../lib/api';
+import { useMoodStore } from '../../store/mood.store';
 import { COLORS, EMOTIONS } from '../../lib/constants';
 
+function scoreColor(n: number) {
+  if (n >= 8) return '#10B981';
+  if (n >= 5) return '#F59E0B';
+  return '#EF4444';
+}
+
 export default function MoodScreen() {
+  const { entries, loading, load, log } = useMoodStore();
   const [score, setScore] = useState<number | null>(null);
   const [selectedEmotions, setSelectedEmotions] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [logged, setLogged] = useState(false);
+
+  useEffect(() => { load(); }, []);
 
   const toggleEmotion = (e: string) => {
     setSelectedEmotions(prev =>
@@ -22,11 +31,7 @@ export default function MoodScreen() {
     if (score === null) { Alert.alert('Pick a mood score first'); return; }
     setSaving(true);
     try {
-      await api.post('/api/mood', {
-        score,
-        emotions: selectedEmotions,
-        logged_at: new Date().toISOString(),
-      });
+      await log(score, selectedEmotions);
       setLogged(true);
       setScore(null);
       setSelectedEmotions([]);
@@ -37,6 +42,8 @@ export default function MoodScreen() {
     }
   };
 
+  const recent = [...entries].reverse().slice(0, 7);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -45,7 +52,7 @@ export default function MoodScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         {logged && (
           <View style={styles.successBanner}>
-            <Text style={styles.successText}>Mood logged! Check Insights for your weekly patterns.</Text>
+            <Text style={styles.successText}>Mood logged!</Text>
           </View>
         )}
 
@@ -80,6 +87,34 @@ export default function MoodScreen() {
         <TouchableOpacity style={styles.saveBtn} onPress={save} disabled={saving || score === null}>
           {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Save Check-In</Text>}
         </TouchableOpacity>
+
+        {/* Recent entries */}
+        {recent.length > 0 && (
+          <View style={styles.historySection}>
+            <Text style={styles.historyTitle}>Recent Check-Ins</Text>
+            {loading && entries.length === 0 ? (
+              <ActivityIndicator color={COLORS.primary} />
+            ) : (
+              recent.map(entry => (
+                <View key={entry.id} style={styles.entryRow}>
+                  <View style={[styles.scoreBadge, { backgroundColor: scoreColor(entry.score) }]}>
+                    <Text style={styles.scoreBadgeText}>{entry.score}</Text>
+                  </View>
+                  <View style={styles.entryInfo}>
+                    <Text style={styles.entryDate}>
+                      {new Date(entry.loggedAt).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                    </Text>
+                    {entry.emotions.length > 0 && (
+                      <Text style={styles.entryEmotions} numberOfLines={1}>
+                        {entry.emotions.join(', ')}
+                      </Text>
+                    )}
+                  </View>
+                </View>
+              ))
+            )}
+          </View>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -97,7 +132,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#D1FAE5', borderRadius: 10, padding: 14, marginBottom: 20,
     borderWidth: 1, borderColor: '#6EE7B7',
   },
-  successText: { color: '#065F46', fontSize: 14, textAlign: 'center' },
+  successText: { color: '#065F46', fontSize: 14, textAlign: 'center', fontWeight: '600' },
   label: { fontSize: 15, fontWeight: '600', color: COLORS.text, marginBottom: 12, marginTop: 8 },
   scoreRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 28 },
   scoreBtn: {
@@ -121,4 +156,19 @@ const styles = StyleSheet.create({
     paddingVertical: 16, alignItems: 'center',
   },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  historySection: { marginTop: 36 },
+  historyTitle: { fontSize: 15, fontWeight: '700', color: COLORS.text, marginBottom: 14 },
+  entryRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: COLORS.white, borderRadius: 12, padding: 12,
+    borderWidth: 1, borderColor: COLORS.border, marginBottom: 8,
+  },
+  scoreBadge: {
+    width: 40, height: 40, borderRadius: 20,
+    alignItems: 'center', justifyContent: 'center', marginRight: 12,
+  },
+  scoreBadgeText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  entryInfo: { flex: 1 },
+  entryDate: { fontSize: 13, fontWeight: '600', color: COLORS.text, marginBottom: 2 },
+  entryEmotions: { fontSize: 12, color: COLORS.textLight },
 });

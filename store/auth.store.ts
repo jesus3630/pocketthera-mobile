@@ -1,6 +1,6 @@
 import { create } from 'zustand';
-import * as SecureStore from 'expo-secure-store';
 import { api } from '../lib/api';
+import { getItem, setItem, deleteItem } from '../lib/storage';
 
 interface User {
   id: string;
@@ -42,32 +42,32 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   login: async (email, password) => {
     const { data } = await api.post('/api/auth/login', { email, password });
-    await SecureStore.setItemAsync('jwt', data.token);
+    await setItem('jwt', data.token);
     set({ token: data.token });
     await get().loadMe();
   },
 
   register: async (email, password, name) => {
     const { data } = await api.post('/api/auth/register', { email, password, name });
-    await SecureStore.setItemAsync('jwt', data.token);
+    await setItem('jwt', data.token);
     set({ token: data.token });
     await get().loadMe();
   },
 
   logout: async () => {
-    await SecureStore.deleteItemAsync('jwt');
+    await deleteItem('jwt');
     set({ user: null, plan: null, token: null });
   },
 
   loadMe: async () => {
     try {
-      const token = await SecureStore.getItemAsync('jwt');
+      const token = await getItem('jwt');
       if (!token) { set({ loading: false }); return; }
       set({ token });
       const { data } = await api.get('/api/auth/me');
       set({ user: data.user, plan: data.plan, loading: false });
     } catch {
-      await SecureStore.deleteItemAsync('jwt');
+      await deleteItem('jwt');
       set({ user: null, plan: null, token: null, loading: false });
     }
   },
