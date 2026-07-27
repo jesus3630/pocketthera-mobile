@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, FlatList, Text, StyleSheet, SafeAreaView,
   TouchableOpacity, Alert, RefreshControl,
+  KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { api } from '../../lib/api';
 import { useAuthStore } from '../../store/auth.store';
@@ -112,6 +113,11 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.flex}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={0}
+      >
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Thera</Text>
@@ -165,12 +171,14 @@ export default function ChatScreen() {
         loading={loading}
         disabled={remaining === 0}
       />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.bg },
+  flex: { flex: 1 },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingVertical: 14,
