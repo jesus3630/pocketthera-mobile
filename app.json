@@ -17,7 +17,8 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.protatech.pocketthera",
       "infoPlist": {
-        "NSMicrophoneUsageDescription": "PocketThera uses your microphone to transcribe voice messages for your wellness conversations."
+        "NSMicrophoneUsageDescription": "PocketThera uses your microphone to transcribe voice messages for your wellness conversations.",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -38,6 +39,13 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "d115c083-cca1-4a33-b0d8-33f596f596e2"
+      }
+    },
+    "owner": "jesustradez"
   }
 }

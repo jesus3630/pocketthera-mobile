@@ -41,12 +41,7 @@ export default function SettingsScreen() {
               {isPremium ? 'Premium' : 'Free'}
             </Text>
             {!isPremium && (
-              <>
-                <Text style={styles.planLimit}>5 messages per day · 3 conversations</Text>
-                <TouchableOpacity style={styles.upgradeBtn}>
-                  <Text style={styles.upgradeBtnText}>Upgrade to Premium — $9.99/mo</Text>
-                </TouchableOpacity>
-              </>
+              <Text style={styles.planLimit}>5 messages per day · 3 conversations</Text>
             )}
             {isPremium && (
               <Text style={styles.planLimit}>Unlimited messages · All features unlocked</Text>

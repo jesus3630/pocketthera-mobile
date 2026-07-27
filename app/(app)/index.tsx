@@ -97,7 +97,7 @@ export default function ChatScreen() {
       const msg = e?.response?.data?.message;
       const limitReached = e?.response?.data?.limitReached;
       if (limitReached) {
-        Alert.alert('Daily limit reached', 'Upgrade to Premium for unlimited messages.');
+        Alert.alert('Daily limit reached', 'You have used all your messages for today. Come back tomorrow.');
       } else {
         Alert.alert('Error', msg ?? 'Could not send message');
       }
@@ -124,7 +124,7 @@ export default function ChatScreen() {
       {remaining !== null && remaining <= 2 && (
         <View style={styles.limitBanner}>
           <Text style={styles.limitText}>
-            {remaining === 0 ? 'Daily limit reached — upgrade to Premium' : `${remaining} message${remaining === 1 ? '' : 's'} left today`}
+            {remaining === 0 ? 'Daily limit reached — resets tomorrow' : `${remaining} message${remaining === 1 ? '' : 's'} left today`}
           </Text>
         </View>
       )}
