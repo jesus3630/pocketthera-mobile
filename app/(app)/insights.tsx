@@ -165,13 +165,12 @@ export default function InsightsScreen() {
           )}
 
           <View style={styles.upgradeCard}>
-            <Text style={styles.upgradeTitle}>AI Insights — Coming Soon</Text>
+            <Text style={styles.upgradeTitle}>About these insights</Text>
             <Text style={styles.upgradeBody}>
-              Weekly emotional pattern analysis powered by Thera — trend detection, peak day breakdowns, and personalized suggestions.
+              This chart reflects only the mood check-ins you log. It is not a clinical assessment, a screening
+              tool, or a diagnosis. General wellbeing guidance in PocketThera is drawn from published public
+              health sources — see Settings → Sources & Citations.
             </Text>
-            {['Weekly AI trend analysis', 'Dominant emotion tracking', 'On-demand deep analysis'].map(f => (
-              <Text key={f} style={styles.upgradeFeature}>• {f}</Text>
-            ))}
           </View>
         </ScrollView>
       </SafeAreaView>

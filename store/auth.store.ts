@@ -4,8 +4,9 @@ import { getItem, setItem, deleteItem } from '../lib/storage';
 
 interface User {
   id: string;
-  email: string;
+  email: string | null;
   name: string;
+  isGuest: boolean;
   onboardingCompleted: boolean;
   dailyMsgCount: number;
 }
@@ -28,6 +29,9 @@ interface AuthState {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
+  continueAsGuest: (name?: string) => Promise<void>;
+  upgradeAccount: (email: string, password: string, name: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   logout: () => Promise<void>;
   loadMe: () => Promise<void>;
   isPremium: () => boolean;
@@ -52,6 +56,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     await setItem('jwt', data.token);
     set({ token: data.token });
     await get().loadMe();
+  },
+
+  // No email, no name, no password — the companion is usable without giving us anything.
+  continueAsGuest: async (name) => {
+    const { data } = await api.post('/api/auth/guest', name ? { name } : {});
+    await setItem('jwt', data.token);
+    set({ token: data.token });
+    await get().loadMe();
+  },
+
+  // Guest adds an account later — same user row, so their history carries over.
+  upgradeAccount: async (email, password, name) => {
+    const { data } = await api.post('/api/auth/upgrade', { email, password, name });
+    await setItem('jwt', data.token);
+    set({ token: data.token });
+    await get().loadMe();
+  },
+
+  deleteAccount: async () => {
+    await api.delete('/api/users/me');
+    await deleteItem('jwt');
+    set({ user: null, plan: null, token: null, loading: false });
   },
 
   logout: async () => {

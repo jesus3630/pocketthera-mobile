@@ -4,6 +4,7 @@ import {
   TouchableOpacity, Alert, RefreshControl,
   KeyboardAvoidingView, Platform,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { api } from '../../lib/api';
 import { useAuthStore } from '../../store/auth.store';
 import { COLORS } from '../../lib/constants';
@@ -26,6 +27,7 @@ interface Conversation {
 }
 
 export default function ChatScreen() {
+  const router = useRouter();
   const { user, plan, loadMe } = useAuthStore();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [activeConvId, setActiveConvId] = useState<string | null>(null);
@@ -126,6 +128,13 @@ export default function ChatScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* Guideline 1.4.1 — AI disclosure + one tap to the sources behind any wellness guidance */}
+      <TouchableOpacity style={styles.sourcesBar} onPress={() => router.push('/(app)/sources')}>
+        <Text style={styles.sourcesText}>
+          Thera is an AI, not a clinician — not medical advice. <Text style={styles.sourcesLink}>Sources & citations ›</Text>
+        </Text>
+      </TouchableOpacity>
+
       {/* Message limit banner */}
       {remaining !== null && remaining <= 2 && (
         <View style={styles.limitBanner}>
@@ -190,6 +199,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 6,
   },
   newBtnText: { color: COLORS.primary, fontWeight: '600', fontSize: 14 },
+  sourcesBar: {
+    paddingHorizontal: 16, paddingVertical: 8,
+    backgroundColor: COLORS.white, borderBottomWidth: 1, borderBottomColor: COLORS.border,
+  },
+  sourcesText: { fontSize: 11, color: COLORS.textLight, textAlign: 'center', lineHeight: 15 },
+  sourcesLink: { color: COLORS.primary, fontWeight: '600' },
   limitBanner: {
     backgroundColor: '#FEF3C7', paddingVertical: 8, paddingHorizontal: 16,
     borderBottomWidth: 1, borderBottomColor: '#FDE68A',

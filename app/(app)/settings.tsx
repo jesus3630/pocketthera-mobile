@@ -1,19 +1,60 @@
+import { useState } from 'react';
 import {
   View, Text, StyleSheet, SafeAreaView, ScrollView,
-  TouchableOpacity, Alert,
+  TouchableOpacity, Alert, Linking, ActivityIndicator,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/auth.store';
 import { COLORS } from '../../lib/constants';
 
+const PRIVACY_URL = 'https://pocketthera-production.up.railway.app/privacy';
+const TERMS_URL = 'https://pocketthera-production.up.railway.app/terms';
+
 export default function SettingsScreen() {
-  const { user, plan, logout } = useAuthStore();
-  const isPremium = plan?.id === 'premium';
+  const router = useRouter();
+  const { user, plan, logout, deleteAccount } = useAuthStore();
+  const isGuest = !!user?.isGuest;
+  const [deleting, setDeleting] = useState(false);
 
   const handleLogout = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Sign Out', style: 'destructive', onPress: logout },
     ]);
+  };
+
+  // Guideline 5.1.1(v): deletion starts and finishes in the app, with one confirmation step.
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Delete Account',
+      'This permanently deletes your account and everything in it — all conversations, messages, mood check-ins and insights. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete Account',
+          style: 'destructive',
+          onPress: () => {
+            Alert.alert('Are you sure?', 'Your data will be erased immediately and cannot be recovered.', [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Delete Permanently',
+                style: 'destructive',
+                onPress: async () => {
+                  setDeleting(true);
+                  try {
+                    await deleteAccount();
+                  } catch (e: any) {
+                    Alert.alert('Could not delete account', e?.response?.data?.message ?? 'Please try again');
+                  } finally {
+                    setDeleting(false);
+                  }
+                },
+              },
+            ]);
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -29,25 +70,19 @@ export default function SettingsScreen() {
           </View>
           <View style={styles.info}>
             <Text style={styles.name}>{user?.name}</Text>
-            <Text style={styles.email}>{user?.email}</Text>
+            <Text style={styles.email}>{isGuest ? 'Guest — no account' : user?.email}</Text>
           </View>
         </View>
 
-        {/* Plan */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Your Plan</Text>
-          <View style={[styles.planCard, isPremium && styles.planCardPremium]}>
-            <Text style={[styles.planName, isPremium && styles.planNamePremium]}>
-              {isPremium ? 'Premium' : 'Free'}
-            </Text>
-            {!isPremium && (
-              <Text style={styles.planLimit}>5 messages per day · 3 conversations</Text>
-            )}
-            {isPremium && (
-              <Text style={styles.planLimit}>Unlimited messages · All features unlocked</Text>
-            )}
+        {/* Guest upgrade — optional, never required to use the app */}
+        {isGuest && (
+          <View style={styles.section}>
+            <TouchableOpacity style={styles.primaryRow} onPress={() => router.push('/(app)/account')}>
+              <Text style={styles.primaryRowText}>Create an account</Text>
+              <Text style={styles.primaryRowHint}>Keep your history across devices</Text>
+            </TouchableOpacity>
           </View>
-        </View>
+        )}
 
         {/* Usage */}
         <View style={styles.section}>
@@ -56,7 +91,7 @@ export default function SettingsScreen() {
             <Text style={styles.usageLabel}>Messages sent</Text>
             <Text style={styles.usageValue}>
               {user?.dailyMsgCount ?? 0}
-              {!isPremium && ` / ${plan?.limits?.messagesPerDay ?? 5}`}
+              {plan?.limits?.messagesPerDay ? ` / ${plan.limits.messagesPerDay}` : ''}
             </Text>
           </View>
         </View>
@@ -66,16 +101,42 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>About</Text>
           <View style={styles.aboutCard}>
             <Text style={styles.aboutText}>
-              PocketThera is a wellness companion app, not a substitute for professional mental health treatment.
-              If you're in crisis, please contact the 988 Suicide & Crisis Lifeline by calling or texting 988.
+              PocketThera is a wellness companion app. Thera is an AI, not a licensed clinician, and the app is
+              not therapy, medical care, or diagnosis. If you're in crisis, contact the 988 Suicide & Crisis
+              Lifeline by calling or texting 988.
             </Text>
           </View>
+
+          <TouchableOpacity style={styles.linkRow} onPress={() => router.push('/(app)/sources')}>
+            <Text style={styles.linkRowText}>Sources & Citations</Text>
+            <Text style={styles.chevron}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.linkRow} onPress={() => Linking.openURL(PRIVACY_URL)}>
+            <Text style={styles.linkRowText}>Privacy Policy</Text>
+            <Text style={styles.chevron}>›</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.linkRow} onPress={() => Linking.openURL(TERMS_URL)}>
+            <Text style={styles.linkRowText}>Terms of Use</Text>
+            <Text style={styles.chevron}>›</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Sign out */}
-        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-          <Text style={styles.logoutText}>Sign Out</Text>
+        {!isGuest && (
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Text style={styles.logoutText}>Sign Out</Text>
+          </TouchableOpacity>
+        )}
+
+        {/* Delete account */}
+        <TouchableOpacity style={styles.deleteBtn} onPress={handleDeleteAccount} disabled={deleting}>
+          {deleting
+            ? <ActivityIndicator color={COLORS.crisis} />
+            : <Text style={styles.deleteText}>Delete Account</Text>}
         </TouchableOpacity>
+        <Text style={styles.deleteHint}>
+          Permanently erases your account and all conversations, mood check-ins and insights.
+        </Text>
 
         <Text style={styles.version}>PocketThera v1.0.0 · ProtaTECH</Text>
       </ScrollView>
@@ -106,19 +167,19 @@ const styles = StyleSheet.create({
   email: { fontSize: 13, color: COLORS.textLight },
   section: { marginBottom: 24 },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: COLORS.textLight, textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 },
-  planCard: {
-    backgroundColor: COLORS.white, borderRadius: 14, padding: 16,
-    borderWidth: 1, borderColor: COLORS.border,
+  primaryRow: {
+    backgroundColor: COLORS.white, borderRadius: 12, padding: 16,
+    borderWidth: 1.5, borderColor: COLORS.primary,
   },
-  planCardPremium: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
-  planName: { fontSize: 18, fontWeight: '700', color: COLORS.text, marginBottom: 4 },
-  planNamePremium: { color: COLORS.primary },
-  planLimit: { fontSize: 13, color: COLORS.textLight, marginBottom: 14 },
-  upgradeBtn: {
-    backgroundColor: COLORS.primary, borderRadius: 10,
-    paddingVertical: 12, alignItems: 'center',
+  primaryRowText: { fontSize: 15, fontWeight: '700', color: COLORS.primary, marginBottom: 3 },
+  primaryRowHint: { fontSize: 12, color: COLORS.textLight },
+  linkRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    backgroundColor: COLORS.white, borderRadius: 12, padding: 16,
+    borderWidth: 1, borderColor: COLORS.border, marginTop: 10,
   },
-  upgradeBtnText: { color: '#fff', fontSize: 14, fontWeight: '600' },
+  linkRowText: { fontSize: 14, color: COLORS.text },
+  chevron: { fontSize: 20, color: COLORS.textLight },
   usageRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     backgroundColor: COLORS.white, borderRadius: 12, padding: 16,
@@ -136,5 +197,11 @@ const styles = StyleSheet.create({
     paddingVertical: 14, alignItems: 'center', marginBottom: 20,
   },
   logoutText: { color: '#EF4444', fontSize: 15, fontWeight: '600' },
+  deleteBtn: {
+    backgroundColor: COLORS.crisis, borderRadius: 12,
+    paddingVertical: 14, alignItems: 'center', marginBottom: 8,
+  },
+  deleteText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  deleteHint: { textAlign: 'center', color: COLORS.textLight, fontSize: 11, lineHeight: 16, marginBottom: 20 },
   version: { textAlign: 'center', color: COLORS.textLight, fontSize: 11 },
 });

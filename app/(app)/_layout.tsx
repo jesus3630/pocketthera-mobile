@@ -37,6 +37,9 @@ export default function AppLayout() {
         name="settings"
         options={{ title: 'Settings', tabBarIcon: ({ focused }) => <TabIcon focused={focused} char="S" /> }}
       />
+      {/* Pushed screens — reachable from Settings and the chat header, not tabs of their own. */}
+      <Tabs.Screen name="sources" options={{ href: null }} />
+      <Tabs.Screen name="account" options={{ href: null }} />
     </Tabs>
   );
 }
